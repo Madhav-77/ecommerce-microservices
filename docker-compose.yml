@@ -5,61 +5,194 @@ services:
     image: postgres:15
     container_name: user-db
     environment:
-      POSTGRES_DB: user_db
-      POSTGRES_USER: user_service
-      POSTGRES_PASSWORD: user_password
+      POSTGRES_DB: ${USER_DB_NAME}
+      POSTGRES_USER: ${USER_DB_USER}
+      POSTGRES_PASSWORD: ${USER_DB_PASSWORD}
     ports:
-      - "5433:5432"
+      - "${USER_DB_PORT}:5432"
     volumes:
       - user_db_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
 
   product-db:
     image: postgres:15
     container_name: product-db
     environment:
-      POSTGRES_DB: product_db
-      POSTGRES_USER: product_service
-      POSTGRES_PASSWORD: product_password
+      POSTGRES_DB: ${PRODUCT_DB_NAME}
+      POSTGRES_USER: ${PRODUCT_DB_USER}
+      POSTGRES_PASSWORD: ${PRODUCT_DB_PASSWORD}
     ports:
-      - "5434:5432"
+      - "${PRODUCT_DB_PORT}:5432"
     volumes:
       - product_db_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
 
   order-db:
     image: postgres:15
     container_name: order-db
     environment:
-      POSTGRES_DB: order_db
-      POSTGRES_USER: order_service
-      POSTGRES_PASSWORD: order_password
+      POSTGRES_DB: ${ORDER_DB_NAME}
+      POSTGRES_USER: ${ORDER_DB_USER}
+      POSTGRES_PASSWORD: ${ORDER_DB_PASSWORD}
     ports:
-      - "5435:5432"
+      - "${ORDER_DB_PORT}:5432"
     volumes:
       - order_db_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
 
   payment-db:
     image: postgres:15
     container_name: payment-db
     environment:
-      POSTGRES_DB: payment_db
-      POSTGRES_USER: payment_service
-      POSTGRES_PASSWORD: payment_password
+      POSTGRES_DB: ${PAYMENT_DB_NAME}
+      POSTGRES_USER: ${PAYMENT_DB_USER}
+      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD}
     ports:
-      - "5436:5432"
+      - "${PAYMENT_DB_PORT}:5432"
     volumes:
       - payment_db_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
 
   notification-db:
     image: postgres:15
     container_name: notification-db
     environment:
-      POSTGRES_DB: notification_db
-      POSTGRES_USER: notification_service
-      POSTGRES_PASSWORD: notification_password
+      POSTGRES_DB: ${NOTIFICATION_DB_NAME}
+      POSTGRES_USER: ${NOTIFICATION_DB_USER}
+      POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
     ports:
-      - "5437:5432"
+      - "${NOTIFICATION_DB_PORT}:5432"
     volumes:
       - notification_db_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+
+  # =========================
+  # Microservices
+  # =========================
+
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "3001:3001"
+      - "5001:5001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      GRPC_PORT: 5001
+      DB_HOST: user-db
+      DB_PORT: 5432
+      DB_USER: ${USER_DB_USER}
+      DB_PASSWORD: ${USER_DB_PASSWORD}
+      DB_NAME: ${USER_DB_NAME}
+    depends_on:
+      - user-db
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  product-service:
+    build:
+      context: ./services/product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    ports:
+      - "3002:3002"
+      - "5002:5002"
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      GRPC_PORT: 5002
+      DB_HOST: product-db
+      DB_PORT: 5432
+      DB_USER: ${PRODUCT_DB_USER}
+      DB_PASSWORD: ${PRODUCT_DB_PASSWORD}
+      DB_NAME: ${PRODUCT_DB_NAME}
+    depends_on:
+      - product-db
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  order-service:
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "3003:3003"
+      - "5003:5003"
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      GRPC_PORT: 5003
+      DB_HOST: order-db
+      DB_PORT: 5432
+      DB_USER: ${ORDER_DB_USER}
+      DB_PASSWORD: ${ORDER_DB_PASSWORD}
+      DB_NAME: ${ORDER_DB_NAME}
+    depends_on:
+      - order-db
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    ports:
+      - "3004:3004"
+      - "5004:5004"
+    environment:
+      NODE_ENV: production
+      PORT: 3004
+      GRPC_PORT: 5004
+      DB_HOST: payment-db
+      DB_PORT: 5432
+      DB_USER: ${PAYMENT_DB_USER}
+      DB_PASSWORD: ${PAYMENT_DB_PASSWORD}
+      DB_NAME: ${PAYMENT_DB_NAME}
+    depends_on:
+      - payment-db
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "3005:3005"
+      - "5005:5005"
+    environment:
+      NODE_ENV: production
+      PORT: 3005
+      GRPC_PORT: 5005
+      DB_HOST: notification-db
+      DB_PORT: 5432
+      DB_USER: ${NOTIFICATION_DB_USER}
+      DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+      DB_NAME: ${NOTIFICATION_DB_NAME}
+    depends_on:
+      - notification-db
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+networks:
+  microservices-network:
+    driver: bridge
 
 volumes:
   user_db_data:
