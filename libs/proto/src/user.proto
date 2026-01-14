@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package user;
+
+// User Service - Handles user management and authentication
+service UserService {
+  rpc CreateUser (CreateUserRequest) returns (User);
+  rpc FindUserById (FindUserByIdRequest) returns (User);
+  rpc FindUserByEmail (FindUserByEmailRequest) returns (User);
+  rpc UpdateUser (UpdateUserRequest) returns (User);
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+  rpc ValidateUser (ValidateUserRequest) returns (ValidateUserResponse);
+}
+
+// Messages
+message User {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  string created_at = 4;
+}
+
+message CreateUserRequest {
+  string email = 1;
+  string name = 2;
+  string password = 3;
+}
+
+message FindUserByIdRequest {
+  string id = 1;
+}
+
+message FindUserByEmailRequest {
+  string email = 1;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  optional string email = 2;
+  optional string name = 3;
+  optional string password = 4;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message DeleteUserResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ValidateUserRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message ValidateUserResponse {
+  bool valid = 1;
+  User user = 2;
+}
