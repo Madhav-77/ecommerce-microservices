@@ -1,7 +1,10 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Order, OrderItem } from "./entities";
+import { Order } from './entities/order.entity';
+import { OrderItem } from './entities/order-item.entity';
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
 
 @Module({
   imports: [
@@ -24,5 +27,7 @@ import { Order, OrderItem } from "./entities";
       }),
     }),
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
