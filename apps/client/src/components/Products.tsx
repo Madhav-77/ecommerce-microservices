@@ -1,33 +1,50 @@
 import { useState } from 'react';
+import { graphqlClient } from '../lib/graphql-client';
 
 function Products() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string>('');
+
+  const testConnection = async () => {
+    setLoading(true);
+    setMessage('');
+    try {
+      const data = await graphqlClient.request<{ hello: string; status: string }>(`
+        query {
+          hello
+          status
+        }
+      `);
+      setMessage(`✅ Gateway Connected!\n${data.hello}\n${data.status}`);
+      console.log('Gateway response:', data);
+    } catch (error) {
+      console.error('Error connecting to gateway:', error);
+      setMessage(`❌ Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
+    setMessage('');
     try {
-      // TODO: Replace with actual GraphQL query when gateway is ready
-      const response = await fetch('/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: `
-            query {
-              products {
-                id
-                name
-                price
-                stock
-              }
-            }
-          `,
-        }),
-      });
-      const data = await response.json();
-      setProducts(data.data?.products || []);
+      const data = await graphqlClient.request<{ products: any[] }>(`
+        query {
+          products {
+            id
+            name
+            price
+            stock
+          }
+        }
+      `);
+      setProducts(data.products || []);
+      setMessage('✅ Products loaded successfully!');
     } catch (error) {
       console.error('Error fetching products:', error);
+      setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -37,9 +54,27 @@ function Products() {
     <div className="section">
       <h2>Products</h2>
 
-      <button className="btn" onClick={fetchProducts} disabled={loading}>
-        {loading ? 'Loading...' : 'Fetch Products'}
-      </button>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+        <button className="btn" onClick={testConnection} disabled={loading}>
+          {loading ? 'Testing...' : 'Test Gateway Connection'}
+        </button>
+        <button className="btn" onClick={fetchProducts} disabled={loading}>
+          {loading ? 'Loading...' : 'Fetch Products'}
+        </button>
+      </div>
+
+      {message && (
+        <div style={{
+          padding: '15px',
+          marginBottom: '20px',
+          borderRadius: '5px',
+          backgroundColor: message.startsWith('✅') ? '#d4edda' : '#f8d7da',
+          color: message.startsWith('✅') ? '#155724' : '#721c24',
+          whiteSpace: 'pre-line'
+        }}>
+          {message}
+        </div>
+      )}
 
       {products.length > 0 && (
         <div className="grid" style={{ marginTop: '20px' }}>

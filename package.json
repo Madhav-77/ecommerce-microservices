@@ -3,11 +3,6 @@
   "version": "1.0.0",
   "description": "E-commerce microservices monorepo",
   "private": true,
-  "workspaces": [
-    "apps/client",
-    "apps/gateway",
-    "services/*"
-  ],
   "scripts": {
     "install:all": "npm install && npm run install:client && npm run install:services",
     "install:client": "cd apps/client && npm install",

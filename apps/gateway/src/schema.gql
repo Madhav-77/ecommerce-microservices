@@ -1,0 +1,11 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Query {
+  """Test query to verify GraphQL is working"""
+  hello: String!
+
+  """Returns gateway status and connection info"""
+  status: String!
+}
