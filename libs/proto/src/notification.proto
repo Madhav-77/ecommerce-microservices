@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package notification;
+
+// Notification Service - Sends notifications to users
+service NotificationService {
+  rpc SendNotification (SendNotificationRequest) returns (Notification);
+  rpc FindNotificationById (FindNotificationByIdRequest) returns (Notification);
+  rpc FindNotificationsByUserId (FindNotificationsByUserIdRequest) returns (NotificationList);
+  rpc SendOrderConfirmation (SendOrderConfirmationRequest) returns (Notification);
+  rpc SendPaymentNotification (SendPaymentNotificationRequest) returns (Notification);
+}
+
+// Messages
+message Notification {
+  string id = 1;
+  string user_id = 2;
+  string type = 3; // e.g., "email", "sms", "push"
+  string message = 4;
+  string sent_at = 5;
+}
+
+message NotificationList {
+  repeated Notification notifications = 1;
+  int32 total = 2;
+}
+
+message SendNotificationRequest {
+  string user_id = 1;
+  string type = 2;
+  string message = 3;
+}
+
+message FindNotificationByIdRequest {
+  string id = 1;
+}
+
+message FindNotificationsByUserIdRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message SendOrderConfirmationRequest {
+  string user_id = 1;
+  string order_id = 2;
+  double total_amount = 3;
+}
+
+message SendPaymentNotificationRequest {
+  string user_id = 1;
+  string order_id = 2;
+  bool payment_success = 3;
+  double amount = 4;
+}

@@ -1,0 +1,71 @@
+# =========================
+# Node.js / NestJS
+# =========================
+**/node_modules/
+**/dist/
+**/build/
+**/coverage/
+**/.nyc_output/
+
+# =========================
+# Logs
+# =========================
+**/logs/
+**/*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# =========================
+# Environment variables
+# =========================
+**/.env
+**/.env.*
+!.env.example
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editors
+# =========================
+.vscode/
+.idea/
+.project
+.classpath
+.c9/
+.settings/
+*.launch
+*.sublime-workspace
+
+# =========================
+# Temporary / Runtime files
+# =========================
+**/.temp/
+**/.tmp/
+**/pids/
+**/*.pid
+**/*.seed
+**/*.pid.lock
+
+# =========================
+# Diagnostic reports
+# =========================
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# =========================
+# Docker / Volumes
+# =========================
+docker-data/
+**/postgres-data/
+
+# =========================
+# Claude Code
+# =========================
+# Commit team-wide configuration, exclude personal settings
+.claude/settings.local.json

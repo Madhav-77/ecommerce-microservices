@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package payment;
+
+// Payment Service - Processes payments
+service PaymentService {
+  rpc ProcessPayment (ProcessPaymentRequest) returns (Payment);
+  rpc FindPaymentById (FindPaymentByIdRequest) returns (Payment);
+  rpc FindPaymentByOrderId (FindPaymentByOrderIdRequest) returns (Payment);
+  rpc RefundPayment (RefundPaymentRequest) returns (Payment);
+}
+
+// Enums
+enum PaymentStatus {
+  SUCCESS = 0;
+  FAILED = 1;
+}
+
+// Messages
+message Payment {
+  string id = 1;
+  string order_id = 2;
+  double amount = 3;
+  PaymentStatus status = 4;
+  string provider = 5;
+  string created_at = 6;
+}
+
+message ProcessPaymentRequest {
+  string order_id = 1;
+  double amount = 2;
+  string provider = 3; // e.g., "stripe", "paypal"
+  PaymentMethod payment_method = 4;
+}
+
+message PaymentMethod {
+  string type = 1; // e.g., "card", "bank_transfer"
+  string token = 2; // Payment gateway token
+}
+
+message FindPaymentByIdRequest {
+  string id = 1;
+}
+
+message FindPaymentByOrderIdRequest {
+  string order_id = 1;
+}
+
+message RefundPaymentRequest {
+  string id = 1;
+  double amount = 2; // partial refund if less than original
+}
