@@ -40,7 +40,7 @@
     "dev:order": "cd services/order-service && npm run start:dev",
     "dev:payment": "cd services/payment-service && npm run start:dev",
     "dev:notification": "cd services/notification-service && npm run start:dev",
-    "db:up": "docker-compose up -d user-db product-db order-db payment-db notification-db",
+    "db:up": "docker compose up -d user-db product-db order-db payment-db notification-db",
     "db:down": "docker-compose down",
     "db:logs": "docker-compose logs -f",
     "db:ps": "docker-compose ps",
