@@ -2,10 +2,85 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input CheckStockInput {
+  id: ID!
+  required_quantity: Int!
+}
+
+type CheckStockResponse {
+  available: Boolean!
+  current_stock: Int!
+}
+
+input CreateProductInput {
+  name: String!
+  price: Float!
+  stock: Int!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type LoginResponse {
+  user: User
+  valid: Boolean!
+}
+
+type Mutation {
+  """Create a new product"""
+  createProduct(input: CreateProductInput!): Product!
+
+  """Login with credentials"""
+  login(input: LoginInput!): LoginResponse!
+
+  """Register a new user"""
+  registerUser(input: RegisterUserInput!): User!
+}
+
+type Product {
+  created_at: String!
+  id: ID!
+  name: String!
+  price: Float!
+  stock: Int!
+}
+
+type ProductList {
+  products: [Product!]!
+  total: Int!
+}
+
 type Query {
+  """Check product stock availability"""
+  checkStock(input: CheckStockInput!): CheckStockResponse!
+
+  """Get product by ID"""
+  getProduct(id: String!): Product
+
+  """Get all products with pagination"""
+  getProducts(limit: Float! = 10, page: Float! = 1): ProductList!
+
+  """Get user by email"""
+  getUser(email: String!): User
+
   """Test query to verify GraphQL is working"""
   hello: String!
 
   """Returns gateway status and connection info"""
   status: String!
+}
+
+input RegisterUserInput {
+  email: String!
+  name: String!
+  password: String!
+}
+
+type User {
+  created_at: String!
+  email: String!
+  id: ID!
+  name: String!
 }
