@@ -97,15 +97,15 @@ Server responds: LocationInfo in stream
 
 ## 📋 Implementation Phases
 
-### Phase 1: Foundation (Unary RPC)
+### Phase 1: Foundation (Unary RPC) - 95% Complete
 **Goal:** Basic CRUD operations with gRPC
 
 **Tasks:**
-- [ ] Setup proto compilation (generate TS interfaces)
-- [ ] Implement User Service: CreateUser, FindUserById, ValidateUser
-- [ ] Implement Product Service: CreateProduct, FindAllProducts, CheckStock
-- [ ] Gateway: gRPC clients for User & Product
-- [ ] Gateway: GraphQL resolvers (registerUser, getProducts)
+- [x] Setup proto compilation (generate TS interfaces)
+- [x] Implement User Service: CreateUser, FindUserByEmail, ValidateUser
+- [x] Implement Product Service: CreateProduct, FindAllProducts, CheckStock, UpdateStock, FindProductById
+- [x] Gateway: gRPC clients for User & Product
+- [x] Gateway: GraphQL resolvers (registerUser, getUser, login, getProducts, getProduct, createProduct, checkStock)
 - [ ] Client: User registration form, product list display
 
 **Learning:** gRPC basics, @GrpcMethod decorators, ClientGrpc injection, error handling
