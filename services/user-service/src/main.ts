@@ -21,6 +21,13 @@ async function bootstrap() {
       package: 'user',
       protoPath: join(__dirname, '../../../../libs/proto/src/user.proto'),
       url: `0.0.0.0:${grpcPort}`,
+      loader: {
+        keepCase: true, // Preserve snake_case field names from proto
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true,
+      },
     },
   });
 
