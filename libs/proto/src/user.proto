@@ -5,7 +5,6 @@ package user;
 // User Service - Handles user management and authentication
 service UserService {
   rpc CreateUser (CreateUserRequest) returns (User);
-  rpc FindUserById (FindUserByIdRequest) returns (User);
   rpc FindUserByEmail (FindUserByEmailRequest) returns (User);
   rpc UpdateUser (UpdateUserRequest) returns (User);
   rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
@@ -24,10 +23,6 @@ message CreateUserRequest {
   string email = 1;
   string name = 2;
   string password = 3;
-}
-
-message FindUserByIdRequest {
-  string id = 1;
 }
 
 message FindUserByEmailRequest {
