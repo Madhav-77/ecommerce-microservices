@@ -201,14 +201,21 @@ npm run dev:user
 curl http://localhost:3001
 ```
 
-## Next Implementation Steps
+## Implementation Roadmap
 
-This project is a work in progress. The following features are defined but not yet implemented:
+This project is a work in progress. For a complete phased implementation guide, see **[PLAN.md](../PLAN.md)**.
 
-1. **gRPC Server Setup** - Add `@nestjs/microservices` and implement proto service definitions
-2. **gRPC Client in Gateway** - Connect gateway to services via gRPC instead of direct calls
-3. **GraphQL Schema Stitching** - Map GraphQL queries to underlying gRPC service calls
-4. **Inter-Service Communication** - Enable services to call each other via gRPC
-5. **End-to-End Flows** - Complete user → product → order → payment flow
+The plan covers:
+- **Use Case:** Tech Gadget Store e-commerce flow (browse → register → order → payment → notification)
+- **All 4 gRPC Patterns:** Unary, Server Streaming, Client Streaming, Bi-directional Streaming
+- **7 Implementation Phases:** From basic CRUD to advanced real-time features
+- **Core Workflows:** Step-by-step breakdowns of user registration, order placement, payment processing, and order tracking
+- **Learning Objectives:** What you'll master in each phase
 
-When implementing these, refer to proto files in `libs/proto/src/` for the defined service contracts.
+**Quick Summary:**
+- **Phase 1-4:** Foundation with Unary RPC (CRUD, order flow, payments, notifications)
+- **Phase 5:** Server Streaming (real-time order tracking, live inventory)
+- **Phase 6:** Client Streaming (bulk uploads, CSV import)
+- **Phase 7:** Bi-directional Streaming (interactive tracking, warehouse sync)
+
+When implementing, refer to proto files in `libs/proto/src/` for service contracts.
