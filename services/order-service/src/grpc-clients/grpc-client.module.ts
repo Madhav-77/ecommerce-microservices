@@ -10,7 +10,7 @@ import { join } from 'path';
         transport: Transport.GRPC,
         options: {
           package: 'user',
-          protoPath: join(__dirname, '../../../../libs/proto/src/user.proto'),
+          protoPath: join(__dirname, '../../../../../libs/proto/src/user.proto'),
           url: 'localhost:5001',
           loader: {
             keepCase: true,
@@ -26,24 +26,8 @@ import { join } from 'path';
         transport: Transport.GRPC,
         options: {
           package: 'product',
-          protoPath: join(__dirname, '../../../../libs/proto/src/product.proto'),
+          protoPath: join(__dirname, '../../../../../libs/proto/src/product.proto'),
           url: 'localhost:5002',
-          loader: {
-            keepCase: true,
-            longs: String,
-            enums: String,
-            defaults: true,
-            oneofs: true,
-          },
-        },
-      },
-      {
-        name: 'ORDER_SERVICE',
-        transport: Transport.GRPC,
-        options: {
-          package: 'order',
-          protoPath: join(__dirname, '../../../../libs/proto/src/order.proto'),
-          url: 'localhost:5003',
           loader: {
             keepCase: true,
             longs: String,

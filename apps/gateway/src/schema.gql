@@ -32,11 +32,52 @@ type Mutation {
   """Create a new product"""
   createProduct(input: CreateProductInput!): Product!
 
+  """Register a new user"""
+  createUser(input: RegisterUserInput!): User!
+
   """Login with credentials"""
   login(input: LoginInput!): LoginResponse!
 
-  """Register a new user"""
-  registerUser(input: RegisterUserInput!): User!
+  """Place a new order (orchestration handled by Order Service)"""
+  placeOrder(input: PlaceOrderInput!): Order!
+}
+
+type Order {
+  created_at: String!
+  id: ID!
+  items: [OrderItem!]!
+  status: OrderStatus!
+  total_amount: Float!
+  user_id: ID!
+}
+
+type OrderItem {
+  id: ID!
+  price: Float!
+  product_id: ID!
+  quantity: Int!
+}
+
+input OrderItemInput {
+  product_id: ID!
+  quantity: Int!
+}
+
+type OrderList {
+  orders: [Order!]!
+  total: Int!
+}
+
+"""The status of an order"""
+enum OrderStatus {
+  CREATED
+  FAILED
+  PAID
+}
+
+input PlaceOrderInput {
+  items: [OrderItemInput!]!
+  user_email: String!
 }
 
 type Product {
@@ -56,6 +97,9 @@ type Query {
   """Check product stock availability"""
   checkStock(input: CheckStockInput!): CheckStockResponse!
 
+  """Get order by ID"""
+  getOrder(id: String!): Order
+
   """Get product by ID"""
   getProduct(id: String!): Product
 
@@ -64,6 +108,9 @@ type Query {
 
   """Get user by email"""
   getUser(email: String!): User
+
+  """Get orders for a user"""
+  getUserOrders(limit: Float! = 10, page: Float! = 1, user_email: String!): OrderList!
 
   """Test query to verify GraphQL is working"""
   hello: String!

@@ -8,16 +8,7 @@ import {
   LoginInput,
   LoginResponseType,
 } from '../types/user.type';
-
-interface UserServiceClient {
-  createUser(data: {
-    email: string;
-    name: string;
-    password: string;
-  }): any;
-  findUserByEmail(data: { email: string }): any;
-  validateUser(data: { email: string; password: string }): any;
-}
+import type { UserServiceClient } from '../interfaces/user-service-client.interface';
 
 @Resolver(() => UserType)
 export class UserResolver implements OnModuleInit {
@@ -30,7 +21,7 @@ export class UserResolver implements OnModuleInit {
   }
 
   @Mutation(() => UserType, { description: 'Register a new user' })
-  async registerUser(
+  async createUser(
     @Args('input') input: RegisterUserInput,
   ): Promise<UserType> {
     try {

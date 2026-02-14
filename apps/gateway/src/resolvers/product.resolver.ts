@@ -9,17 +9,7 @@ import {
   CheckStockInput,
   CheckStockResponseType,
 } from '../types/product.type';
-
-interface ProductServiceClient {
-  createProduct(data: {
-    name: string;
-    price: number;
-    stock: number;
-  }): any;
-  findProductById(data: { id: string }): any;
-  findAllProducts(data: { page: number; limit: number }): any;
-  checkStock(data: { id: string; required_quantity: number }): any;
-}
+import type { ProductServiceClient } from '../interfaces/product-service-client.interface';
 
 @Resolver(() => ProductType)
 export class ProductResolver implements OnModuleInit {

@@ -9,34 +9,6 @@ function Users() {
     password: '',
   });
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      // TODO: Replace with actual GraphQL query when gateway is ready
-      const response = await fetch('/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: `
-            query {
-              users {
-                id
-                name
-                email
-              }
-            }
-          `,
-        }),
-      });
-      const data = await response.json();
-      setUsers(data.data?.users || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const createUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -47,15 +19,17 @@ function Users() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: `
-            mutation CreateUser($name: String!, $email: String!, $password: String!) {
-              createUser(name: $name, email: $email, password: $password) {
+            mutation CreateUser($input: RegisterUserInput!) {
+              createUser(input: $input) {
                 id
                 name
                 email
               }
             }
           `,
-          variables: formData,
+          variables: {
+            input: formData,
+          },
         }),
       });
       const data = await response.json();
@@ -72,7 +46,7 @@ function Users() {
 
   return (
     <div className="section">
-      <h2>Users</h2>
+      <h2>Create User</h2>
 
       <form onSubmit={createUser} style={{ marginBottom: '30px' }}>
         <div className="form-group">
@@ -103,16 +77,13 @@ function Users() {
           />
         </div>
         <button type="submit" className="btn" disabled={loading}>
-          Create User
+          {loading ? 'Creating...' : 'Create User'}
         </button>
       </form>
 
-      <button className="btn" onClick={fetchUsers} disabled={loading}>
-        {loading ? 'Loading...' : 'Fetch Users'}
-      </button>
-
       {users.length > 0 && (
         <div style={{ marginTop: '20px' }}>
+          <h3>Created Users</h3>
           {users.map((user) => (
             <div key={user.id} className="card">
               <h3>{user.name}</h3>

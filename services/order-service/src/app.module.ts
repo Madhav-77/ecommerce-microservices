@@ -5,6 +5,7 @@ import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
+import { OrderModule } from "./order/order.module";
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AppService } from "./app.service";
         synchronize: false,
       }),
     }),
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],

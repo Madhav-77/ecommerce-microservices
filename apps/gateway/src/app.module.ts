@@ -8,6 +8,7 @@ import { HelloResolver } from './hello.resolver';
 import { GrpcClientModule } from './grpc-clients/grpc-client.module';
 import { UserResolver } from './resolvers/user.resolver';
 import { ProductResolver } from './resolvers/product.resolver';
+import { OrderResolver } from './resolvers/order.resolver';
 
 @Module({
   imports: [
@@ -17,10 +18,11 @@ import { ProductResolver } from './resolvers/product.resolver';
       sortSchema: true,
       playground: true,
       introspection: true,
+      csrfPrevention: false, // Disabled for development
     }),
     GrpcClientModule,
   ],
   controllers: [AppController],
-  providers: [AppService, HelloResolver, UserResolver, ProductResolver],
+  providers: [AppService, HelloResolver, UserResolver, ProductResolver, OrderResolver],
 })
 export class AppModule {}
