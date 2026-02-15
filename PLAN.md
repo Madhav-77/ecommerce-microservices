@@ -21,13 +21,16 @@ This flow exercises 3 core microservices (User, Product, Order) and demonstrates
 
 ---
 
-### 2. Server Streaming RPC 🎯 PHASE 4
+### 2. Server Streaming RPC ✅ IMPLEMENTED
 **Pattern:** Client sends 1 request → Server sends stream of responses
 **Examples:**
-- `OrderService.WatchOrderStatus` - Real-time order tracking (CREATED → PAID → SHIPPED → DELIVERED)
-- `ProductService.WatchProductStock` - Live inventory monitoring for admin dashboard
+- `OrderService.WatchOrderStatus` - Real-time order tracking (CREATED → PAID → PROCESSING → SHIPPED → OUT_FOR_DELIVERY → DELIVERED)
+  - Streams 6 status updates over ~15 seconds
+  - Validates order exists before streaming
+  - Full pipeline: Observable → AsyncIterator → WebSocket → React UI
 
-**Learning:** RxJS Observables, GraphQL subscriptions, WebSocket lifecycle
+**Status:** Complete with production-quality validation and error handling
+**Learning:** RxJS Observables, `@GrpcMethod` + Observable, async generators (`async *`), GraphQL subscriptions, WebSocket with `graphql-ws`
 
 ---
 
@@ -112,40 +115,73 @@ Response: Order with items, totalAmount, status
 
 ---
 
-### Phase 3: Complete CRUD Operations ⏳ NEXT
+### Phase 3: Complete CRUD Operations ⏭️ SKIPPED
 **Goal:** Finish missing Unary RPC methods
 
-**Tasks:**
-- [ ] User Service: Implement UpdateUser, DeleteUser (currently commented out)
-- [ ] Product Service: Implement UpdateProduct, DeleteProduct (currently commented out)
-- [ ] Gateway: Add GraphQL mutations for update/delete operations
-- [ ] Test all CRUD operations via GraphQL Playground
+**Why Skipped:**
+- Current implementation already demonstrates Unary RPC pattern well (17 methods)
+- Core Create/Read operations are sufficient for learning
+- Update/Delete can be added later if needed
+- Focus on more interesting streaming patterns
 
-**Time Estimate:** 30 minutes
-
-**Learning:** Complete CRUD pattern mastery in microservices
+**Skipped Tasks:**
+- ~~User Service: Implement UpdateUser, DeleteUser~~
+- ~~Product Service: Implement UpdateProduct, DeleteProduct~~
+- ~~Gateway: Add GraphQL mutations for update/delete~~
 
 ---
 
-### Phase 4: Server Streaming RPC ⏳ UPCOMING
+### Phase 4: Server Streaming RPC ✅ COMPLETE
 **Goal:** Real-time data push from server
 
-**Tasks:**
-- [ ] Order Service: `WatchOrderStatus(orderId) → stream<StatusUpdate>`
-  - Returns Observable that emits status changes every 2-3 seconds
-  - Simulates: CREATED → PAID → SHIPPED → OUT_FOR_DELIVERY → DELIVERED
-- [ ] Product Service: `WatchProductStock(productId) → stream<StockUpdate>`
-  - Emits when stock changes for live admin dashboard
-- [ ] Update proto files with streaming definitions
-- [ ] Gateway: GraphQL subscriptions (WebSocket)
-  - `subscription { watchOrderStatus(orderId: "...") { status, timestamp } }`
-- [ ] Client: Real-time order tracking component
-  - Auto-updates without page refresh
-  - WebSocket connection management
+**Completed:**
+- ✅ Order Service: `WatchOrderStatus(orderId) → stream<StatusUpdate>`
+  - Uses `@GrpcMethod` (not @GrpcStreamMethod) with Observable return type
+  - Validates order exists before streaming
+  - Emits 6 status updates over ~15 seconds: CREATED → PAID → PROCESSING → SHIPPED → OUT_FOR_DELIVERY → DELIVERED
+  - Proper error handling with RpcException for invalid order IDs
+- ✅ Updated `order.proto` with server streaming RPC:
+  ```protobuf
+  rpc WatchOrderStatus (WatchOrderStatusRequest) returns (stream OrderStatusUpdate);
+  ```
+- ✅ Gateway: GraphQL subscriptions over WebSocket
+  - Converts gRPC Observable → AsyncIterator using async generator (`async *function`)
+  - Subscription: `watchOrderStatus(order_id: String!): OrderStatusUpdate!`
+  - Enabled WebSocket support with `graphql-ws` protocol
+  - Proper cleanup and error propagation
+- ✅ Client: Real-time order tracking UI component
+  - WebSocket connection using `graphql-ws` library
+  - Displays status updates as they arrive
+  - Shows errors for invalid order IDs
+  - Clean unsubscribe on component unmount
+  - User guidance for obtaining valid order IDs
 
-**Time Estimate:** 1-2 hours
+**Key Implementation Details:**
+- **Proto:** `returns (stream OrderStatusUpdate)` for server streaming
+- **Order Service Controller:**
+  ```typescript
+  @GrpcMethod('OrderService', 'WatchOrderStatus')
+  watchOrderStatus(data: WatchOrderStatusRequest): Observable<OrderStatusUpdate>
+  ```
+- **Order Service Service:** Custom Observable with timed emissions using `setTimeout`
+- **Gateway Resolver:**
+  ```typescript
+  @Subscription(() => OrderStatusUpdateType)
+  async *watchOrderStatus(@Args('order_id') orderId: string) {
+    // Convert Observable to AsyncIterator by buffering and yielding
+  }
+  ```
+- **Client Component:** `createClient` from `graphql-ws`, subscribe pattern with `next/error/complete` handlers
 
-**Learning:** RxJS Observables in NestJS, GraphQL subscriptions, WebSocket lifecycle, memory leak prevention, real-time data patterns
+**Learning Achieved:**
+- ✅ RxJS Observable creation and subscription lifecycle
+- ✅ gRPC server streaming with `@GrpcMethod` + Observable (NOT @GrpcStreamMethod)
+- ✅ GraphQL subscriptions require AsyncIterator, not Observable
+- ✅ Async generators (`async *function`) with `yield` for streaming
+- ✅ WebSocket connection management and cleanup
+- ✅ Converting Observable → AsyncIterator pattern
+- ✅ Real-time error handling across gRPC → GraphQL → WebSocket layers
+- ✅ Order validation before streaming to prevent abuse
 
 ---
 
@@ -274,13 +310,13 @@ Response: Order with items, totalAmount, status
 
 | Phase | Focus | Time |
 |-------|-------|------|
-| Phase 1-2 | Unary RPC (Completed) | ✅ Done |
-| Phase 3 | Complete CRUD | 30 min |
-| Phase 4 | Server Streaming | 1-2 hours |
+| Phase 1-2 | Unary RPC | ✅ Done |
+| Phase 3 | Complete CRUD | ⏭️ Skipped |
+| **Phase 4** | **Server Streaming** | **1-2 hours** ⏳ |
 | Phase 5 | Client Streaming | 1-2 hours |
 | Phase 6 | Bidirectional Streaming | 2-3 hours |
 | Phase 7 | Dockerization | 2-3 hours |
-| **Total Remaining** | | **7-11 hours** |
+| **Total Remaining** | | **6-10 hours** |
 
 ---
 

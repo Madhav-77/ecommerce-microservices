@@ -70,9 +70,21 @@ type OrderList {
 
 """The status of an order"""
 enum OrderStatus {
+  CANCELLED
   CREATED
+  DELIVERED
   FAILED
+  OUT_FOR_DELIVERY
   PAID
+  PROCESSING
+  SHIPPED
+}
+
+type OrderStatusUpdate {
+  message: String!
+  order_id: ID!
+  status: OrderStatus!
+  timestamp: String!
 }
 
 input PlaceOrderInput {
@@ -123,6 +135,11 @@ input RegisterUserInput {
   email: String!
   name: String!
   password: String!
+}
+
+type Subscription {
+  """Watch real-time order status updates (Server Streaming RPC)"""
+  watchOrderStatus(order_id: String!): OrderStatusUpdate!
 }
 
 type User {

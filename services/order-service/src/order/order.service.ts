@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
 import type { ClientGrpc } from '@nestjs/microservices';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Observable, interval } from 'rxjs';
+import { map, take, concatMap, delay } from 'rxjs/operators';
 import { Order as OrderEntity } from '../entities/order.entity';
 import { OrderItem as OrderItemEntity } from '../entities/order-item.entity';
 import type {
@@ -15,6 +16,8 @@ import type {
   UpdateOrderStatusRequest,
   CancelOrderRequest,
   PlaceOrderRequest,
+  WatchOrderStatusRequest,
+  OrderStatusUpdate,
 } from './interfaces/order-service.interface';
 import { OrderStatus } from './interfaces/order-service.interface';
 import type { UserServiceClient, User } from './interfaces/user-service-client.interface';
@@ -358,6 +361,79 @@ export class OrderService implements OnModuleInit {
     const cancelledOrder = await this.orderRepository.save(order);
 
     return this.mapToProtoOrder(cancelledOrder);
+  }
+
+  /**
+   * Server Streaming RPC - Watch Order Status
+   * Simulates real-time order status updates
+   */
+  watchOrderStatus(data: WatchOrderStatusRequest): Observable<OrderStatusUpdate> {
+    this.logger.log(`Starting order status watch for order: ${data.order_id}`);
+
+    // Create an observable that emits status updates over time
+    return new Observable<OrderStatusUpdate>((subscriber) => {
+      // Validate order exists first
+      this.orderRepository.findOne({ where: { id: data.order_id } })
+        .then((order) => {
+          if (!order) {
+            subscriber.error(new RpcException({
+              code: 5, // NOT_FOUND
+              message: `Order with ID ${data.order_id} not found`,
+            }));
+            return;
+          }
+
+          this.logger.log(`Order found: ${order.id}, current status: ${order.status}`);
+
+          // Simulated order status progression
+          const statusProgression = [
+            { status: OrderStatus.CREATED, message: 'Order created successfully', delayMs: 0 },
+            { status: OrderStatus.PAID, message: 'Payment processed', delayMs: 2000 },
+            { status: OrderStatus.PROCESSING, message: 'Order is being prepared', delayMs: 3000 },
+            { status: OrderStatus.SHIPPED, message: 'Order has been shipped', delayMs: 3000 },
+            { status: OrderStatus.OUT_FOR_DELIVERY, message: 'Out for delivery', delayMs: 4000 },
+            { status: OrderStatus.DELIVERED, message: 'Order delivered successfully!', delayMs: 3000 },
+          ];
+
+          let currentIndex = 0;
+
+          const emitNext = () => {
+            if (currentIndex >= statusProgression.length) {
+              subscriber.complete();
+              return;
+            }
+
+            const update = statusProgression[currentIndex];
+            const statusUpdate: OrderStatusUpdate = {
+              order_id: data.order_id,
+              status: update.status,
+              message: update.message,
+              timestamp: new Date().toISOString(),
+            };
+
+            subscriber.next(statusUpdate);
+            this.logger.log(`Emitted status update: ${update.status} for order ${data.order_id}`);
+
+            currentIndex++;
+
+            if (currentIndex < statusProgression.length) {
+              setTimeout(emitNext, statusProgression[currentIndex].delayMs);
+            } else {
+              subscriber.complete();
+            }
+          };
+
+          // Start emitting
+          emitNext();
+        })
+        .catch((error) => {
+          this.logger.error('Error validating order:', error);
+          subscriber.error(new RpcException({
+            code: 13, // INTERNAL
+            message: `Failed to validate order: ${error.message}`,
+          }));
+        });
+    });
   }
 
   /**

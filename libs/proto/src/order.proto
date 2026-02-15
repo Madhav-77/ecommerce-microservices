@@ -10,6 +10,9 @@ service OrderService {
   rpc FindOrdersByUserId (FindOrdersByUserIdRequest) returns (OrderList);
   rpc UpdateOrderStatus (UpdateOrderStatusRequest) returns (Order);
   rpc CancelOrder (CancelOrderRequest) returns (Order);
+
+  // Server Streaming RPC - Real-time order tracking
+  rpc WatchOrderStatus (WatchOrderStatusRequest) returns (stream OrderStatusUpdate);
 }
 
 // Enums
@@ -17,6 +20,11 @@ enum OrderStatus {
   CREATED = 0;
   PAID = 1;
   FAILED = 2;
+  PROCESSING = 3;
+  SHIPPED = 4;
+  OUT_FOR_DELIVERY = 5;
+  DELIVERED = 6;
+  CANCELLED = 7;
 }
 
 // Messages
@@ -80,4 +88,16 @@ message PlaceOrderRequest {
 message PlaceOrderItemRequest {
   string product_id = 1;
   int32 quantity = 2;
+}
+
+// Server Streaming - Watch Order Status
+message WatchOrderStatusRequest {
+  string order_id = 1;
+}
+
+message OrderStatusUpdate {
+  string order_id = 1;
+  OrderStatus status = 2;
+  string message = 3;  // Human-readable status message
+  string timestamp = 4;
 }

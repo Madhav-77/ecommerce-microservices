@@ -3,9 +3,10 @@ import Products from './components/Products';
 import Users from './components/Users';
 import Orders from './components/Orders';
 import Cart from './components/Cart';
+import { OrderTracking } from './components/OrderTracking';
 import type { Product, CartItem } from './types/interfaces';
 
-type View = 'products' | 'users' | 'orders' | 'cart';
+type View = 'products' | 'users' | 'orders' | 'cart' | 'tracking';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('products');
@@ -102,6 +103,12 @@ function App() {
             >
               Orders
             </button>
+            <button
+              className={currentView === 'tracking' ? 'active' : ''}
+              onClick={() => setCurrentView('tracking')}
+            >
+              Track Order
+            </button>
           </nav>
         </div>
       </header>
@@ -118,6 +125,7 @@ function App() {
         )}
         {currentView === 'users' && <Users />}
         {currentView === 'orders' && <Orders />}
+        {currentView === 'tracking' && <OrderTracking />}
       </main>
     </div>
   );

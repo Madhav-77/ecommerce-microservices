@@ -19,6 +19,9 @@ import { OrderResolver } from './resolvers/order.resolver';
       playground: true,
       introspection: true,
       csrfPrevention: false, // Disabled for development
+      subscriptions: {
+        'graphql-ws': true, // Enable WebSocket subscriptions
+      },
     }),
     GrpcClientModule,
   ],

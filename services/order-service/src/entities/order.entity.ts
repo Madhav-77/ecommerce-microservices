@@ -5,6 +5,11 @@ export enum OrderStatus {
   CREATED = 'CREATED',
   PAID = 'PAID',
   FAILED = 'FAILED',
+  PROCESSING = 'PROCESSING',
+  SHIPPED = 'SHIPPED',
+  OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED',
 }
 
 @Entity('orders')

@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Subscription } from '@nestjs/graphql';
 import { Inject, OnModuleInit, Logger } from '@nestjs/common';
 import type { ClientGrpc } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
@@ -6,11 +6,12 @@ import {
   OrderType,
   OrderListType,
   PlaceOrderInput,
+  OrderStatusUpdateType,
 } from '../types/order.type';
 import type { UserServiceClient } from '../interfaces/user-service-client.interface';
 import type { User } from '../interfaces/user-service-client.interface';
 import type { OrderServiceClient } from '../interfaces/order-service-client.interface';
-import type { Order } from '../interfaces/order-service-client.interface';
+import type { Order, OrderStatusUpdate } from '../interfaces/order-service-client.interface';
 
 @Resolver(() => OrderType)
 export class OrderResolver implements OnModuleInit {
@@ -94,6 +95,71 @@ export class OrderResolver implements OnModuleInit {
         return null;
       }
       throw new Error(`Failed to get order: ${error.message}`);
+    }
+  }
+
+  @Subscription(() => OrderStatusUpdateType, {
+    description: 'Watch real-time order status updates (Server Streaming RPC)',
+    resolve: (payload) => payload,
+  })
+  async *watchOrderStatus(@Args('order_id') orderId: string) {
+    this.logger.log(`Starting subscription for order: ${orderId}`);
+
+    // Get gRPC Observable stream from Order Service
+    const stream = this.orderService.watchOrderStatus({ order_id: orderId });
+
+    // Convert Observable to AsyncIterator by yielding each emitted value
+    try {
+      // Use a promise-based approach to handle Observable events
+      const updates: any[] = [];
+      let streamCompleted = false;
+      let streamError: any = null;
+
+      // Subscribe to the Observable
+      const subscription = stream.subscribe({
+        next: (update) => {
+          this.logger.log(`Received update: ${update.status}`);
+          updates.push(update);
+        },
+        error: (err) => {
+          this.logger.error('Stream error:', err);
+          streamError = err;
+          streamCompleted = true;
+        },
+        complete: () => {
+          this.logger.log('Stream completed');
+          streamCompleted = true;
+        },
+      });
+
+      // Yield updates as they arrive
+      let lastIndex = 0;
+      while (!streamCompleted || lastIndex < updates.length) {
+        // Yield all new updates
+        while (lastIndex < updates.length) {
+          yield updates[lastIndex];
+          lastIndex++;
+        }
+
+        // If stream completed, exit
+        if (streamCompleted) {
+          break;
+        }
+
+        // Wait a bit before checking for more updates
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      // Cleanup
+      subscription.unsubscribe();
+
+      // If there was an error, throw it
+      if (streamError) {
+        throw streamError;
+      }
+    } catch (error) {
+      this.logger.error('Subscription failed:', error.message);
+      throw new Error(`Failed to watch order status: ${error.message}`);
     }
   }
 }

@@ -1,4 +1,5 @@
 // Order Service gRPC client interface
+import { Observable } from 'rxjs';
 
 export interface OrderItem {
   id: string;
@@ -41,8 +42,20 @@ export interface FindOrdersByUserIdRequest {
   limit: number;
 }
 
+export interface WatchOrderStatusRequest {
+  order_id: string;
+}
+
+export interface OrderStatusUpdate {
+  order_id: string;
+  status: string;
+  message: string;
+  timestamp: string;
+}
+
 export interface OrderServiceClient {
   placeOrder(data: PlaceOrderRequest): any;
   findOrderById(data: FindOrderByIdRequest): any;
   findOrdersByUserId(data: FindOrdersByUserIdRequest): any;
+  watchOrderStatus(data: WatchOrderStatusRequest): Observable<OrderStatusUpdate>;
 }

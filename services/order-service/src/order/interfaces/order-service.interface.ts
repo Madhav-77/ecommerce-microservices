@@ -1,9 +1,15 @@
 // TypeScript interfaces matching order.proto messages
+import { Observable } from 'rxjs';
 
 export enum OrderStatus {
   CREATED = 'CREATED',
   PAID = 'PAID',
   FAILED = 'FAILED',
+  PROCESSING = 'PROCESSING',
+  SHIPPED = 'SHIPPED',
+  OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED',
 }
 
 export interface OrderItem {
@@ -68,6 +74,18 @@ export interface PlaceOrderItemRequest {
   quantity: number;
 }
 
+// Server Streaming - Watch Order Status
+export interface WatchOrderStatusRequest {
+  order_id: string;
+}
+
+export interface OrderStatusUpdate {
+  order_id: string;
+  status: OrderStatus;
+  message: string;
+  timestamp: string;
+}
+
 // Service interface for gRPC controller
 export interface OrderServiceController {
   placeOrder(data: PlaceOrderRequest): Promise<Order>;
@@ -76,4 +94,5 @@ export interface OrderServiceController {
   findOrdersByUserId(data: FindOrdersByUserIdRequest): Promise<OrderList>;
   updateOrderStatus(data: UpdateOrderStatusRequest): Promise<Order>;
   cancelOrder(data: CancelOrderRequest): Promise<Order>;
+  watchOrderStatus(data: WatchOrderStatusRequest): Observable<OrderStatusUpdate>;
 }

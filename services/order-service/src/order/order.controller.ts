@@ -1,5 +1,6 @@
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
+import { Observable } from 'rxjs';
 import { OrderService } from './order.service';
 import type {
   Order,
@@ -11,6 +12,8 @@ import type {
   CancelOrderRequest,
   OrderServiceController,
   PlaceOrderRequest,
+  WatchOrderStatusRequest,
+  OrderStatusUpdate,
 } from './interfaces/order-service.interface';
 
 @Controller()
@@ -47,5 +50,12 @@ export class OrderController implements OrderServiceController {
   @GrpcMethod('OrderService', 'CancelOrder')
   async cancelOrder(data: CancelOrderRequest): Promise<Order> {
     return this.orderService.cancelOrder(data);
+  }
+
+  @GrpcMethod('OrderService', 'WatchOrderStatus')
+  watchOrderStatus(
+    data: WatchOrderStatusRequest,
+  ): Observable<OrderStatusUpdate> {
+    return this.orderService.watchOrderStatus(data);
   }
 }

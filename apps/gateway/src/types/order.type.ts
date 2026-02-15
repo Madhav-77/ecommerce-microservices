@@ -4,6 +4,26 @@ export enum OrderStatus {
   CREATED = 'CREATED',
   PAID = 'PAID',
   FAILED = 'FAILED',
+  PROCESSING = 'PROCESSING',
+  SHIPPED = 'SHIPPED',
+  OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED',
+}
+
+@ObjectType('OrderStatusUpdate')
+export class OrderStatusUpdateType {
+  @Field(() => ID)
+  order_id: string;
+
+  @Field(() => OrderStatus)
+  status: OrderStatus;
+
+  @Field()
+  message: string;
+
+  @Field()
+  timestamp: string;
 }
 
 registerEnumType(OrderStatus, {

@@ -15,11 +15,14 @@ async function bootstrap() {
 
   // Configure gRPC microservice
   const grpcPort = process.env.GRPC_PORT ?? 5003;
+  const protoPath = join(__dirname, '../../../../libs/proto/src/order.proto');
+  logger.log(`Loading proto from: ${protoPath}`);
+
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.GRPC,
     options: {
       package: 'order',
-      protoPath: join(__dirname, '../../../../libs/proto/src/order.proto'),
+      protoPath,
       url: `0.0.0.0:${grpcPort}`,
       loader: {
         keepCase: true,
