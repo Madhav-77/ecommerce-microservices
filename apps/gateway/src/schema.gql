@@ -153,8 +153,20 @@ input RegisterUserInput {
 }
 
 type Subscription {
+  interactiveOrderTracking(order_id: String!): TrackingResponse!
+
   """Watch real-time order status updates (Server Streaming RPC)"""
   watchOrderStatus(order_id: String!): OrderStatusUpdate!
+}
+
+type TrackingResponse {
+  eta: String
+  location: String
+  message: String!
+  order_id: ID!
+  status: OrderStatus!
+  timestamp: String!
+  type: String!
 }
 
 type User {

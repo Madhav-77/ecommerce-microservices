@@ -26,9 +26,46 @@ export class OrderStatusUpdateType {
   timestamp: string;
 }
 
+export enum ResponseType {
+  STATUS_UPDATE = 'STATUS_UPDATE',
+  LOCATION = 'LOCATION',
+  ETA = 'ETA',
+  CONFIRMATION = 'CONFIRMATION',
+  ERROR = 'ERROR',
+}
+
+@ObjectType('TrackingResponse')
+export class TrackingResponseType {
+  @Field(() => ID)
+  order_id: string;
+
+  @Field(() => String)
+  type: string;
+
+  @Field(() => OrderStatus)
+  status: OrderStatus;
+
+  @Field()
+  message: string;
+
+  @Field({ nullable: true })
+  location?: string;
+
+  @Field({ nullable: true })
+  eta?: string;
+
+  @Field()
+  timestamp: string;
+}
+
 registerEnumType(OrderStatus, {
   name: 'OrderStatus',
   description: 'The status of an order',
+});
+
+registerEnumType(ResponseType, {
+  name: 'ResponseType',
+  description: 'Type of tracking response',
 });
 
 @ObjectType('OrderItem')

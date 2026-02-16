@@ -1,17 +1,18 @@
 import { Resolver, Query, Mutation, Args, Subscription } from '@nestjs/graphql';
 import { Inject, OnModuleInit, Logger } from '@nestjs/common';
 import type { ClientGrpc } from '@nestjs/microservices';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Observable, ReplaySubject, Subject } from 'rxjs';
 import {
   OrderType,
   OrderListType,
   PlaceOrderInput,
   OrderStatusUpdateType,
+  TrackingResponseType,
 } from '../types/order.type';
 import type { UserServiceClient } from '../interfaces/user-service-client.interface';
 import type { User } from '../interfaces/user-service-client.interface';
 import type { OrderServiceClient } from '../interfaces/order-service-client.interface';
-import type { Order, OrderStatusUpdate } from '../interfaces/order-service-client.interface';
+import type { Order, OrderStatusUpdate, TrackingQuery, TrackingResponse } from '../interfaces/order-service-client.interface';
 
 @Resolver(() => OrderType)
 export class OrderResolver implements OnModuleInit {
@@ -162,4 +163,94 @@ export class OrderResolver implements OnModuleInit {
       throw new Error(`Failed to watch order status: ${error.message}`);
     }
   }
+
+  @Subscription(() => TrackingResponseType, {
+    resolve: (payload) => payload,
+  })
+  async *interactiveOrderTracking(
+    @Args('order_id') orderId: string,
+  ) {
+    const subject = new Subject<TrackingQuery>();
+  
+    const response$ =
+      this.orderService.interactiveOrderTracking(subject.asObservable());
+  
+    const asyncIterator = this.observableToAsyncIterator(response$);
+  
+    // 🚀 IMPORTANT: defer emission
+    setImmediate(() => {
+      subject.next({
+        order_id: orderId,
+        type: 'SUBSCRIBE',
+      });
+    });
+  
+    try {
+      for await (const value of asyncIterator) {
+        yield value;
+      }
+    } finally {
+      subject.complete();
+    }
+  }
+  
+  
+  observableToAsyncIterator<T>(
+    observable: Observable<T>,
+  ): AsyncIterable<T> {
+  
+    const pullQueue: ((value: IteratorResult<T>) => void)[] = [];
+    const pushQueue: T[] = [];
+    let isDone = false;
+  
+    const subscription = observable.subscribe({
+      next(value) {
+        if (pullQueue.length !== 0) {
+          pullQueue.shift()!({ value, done: false });
+        } else {
+          pushQueue.push(value);
+        }
+      },
+      error(error) {
+        isDone = true;
+        while (pullQueue.length !== 0) {
+          pullQueue.shift()!(Promise.reject(error) as any);
+        }
+      },
+      complete() {
+        isDone = true;
+        while (pullQueue.length !== 0) {
+          pullQueue.shift()!({ value: undefined as any, done: true });
+        }
+      },
+    });
+  
+    return {
+      [Symbol.asyncIterator]() {
+        return {
+          next() {
+            if (pushQueue.length !== 0) {
+              return Promise.resolve({
+                value: pushQueue.shift()!,
+                done: false,
+              });
+            }
+  
+            if (isDone) {
+              return Promise.resolve({ value: undefined as any, done: true });
+            }
+  
+            return new Promise<IteratorResult<T>>((resolve) => {
+              pullQueue.push(resolve);
+            });
+          },
+          return() {
+            subscription.unsubscribe();
+            return Promise.resolve({ value: undefined as any, done: true });
+          },
+        };
+      },
+    };
+  }
+  
 }

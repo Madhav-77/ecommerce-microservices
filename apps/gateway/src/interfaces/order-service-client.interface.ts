@@ -53,9 +53,26 @@ export interface OrderStatusUpdate {
   timestamp: string;
 }
 
+export interface TrackingQuery {
+  order_id: string;
+  type: string;
+  message?: string;
+}
+
+export interface TrackingResponse {
+  order_id: string;
+  type: string;
+  status: string;
+  message: string;
+  location?: string;
+  eta?: string;
+  timestamp: string;
+}
+
 export interface OrderServiceClient {
   placeOrder(data: PlaceOrderRequest): any;
   findOrderById(data: FindOrderByIdRequest): any;
   findOrdersByUserId(data: FindOrdersByUserIdRequest): any;
   watchOrderStatus(data: WatchOrderStatusRequest): Observable<OrderStatusUpdate>;
+  interactiveOrderTracking(data: Observable<TrackingQuery>): Observable<TrackingResponse>;
 }

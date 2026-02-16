@@ -13,6 +13,9 @@ service OrderService {
 
   // Server Streaming RPC - Real-time order tracking
   rpc WatchOrderStatus (WatchOrderStatusRequest) returns (stream OrderStatusUpdate);
+
+  // Bidirectional Streaming RPC - Interactive order tracking with queries
+  rpc InteractiveOrderTracking (stream TrackingQuery) returns (stream TrackingResponse);
 }
 
 // Enums
@@ -100,4 +103,37 @@ message OrderStatusUpdate {
   OrderStatus status = 2;
   string message = 3;  // Human-readable status message
   string timestamp = 4;
+}
+
+// Bidirectional Streaming - Interactive Order Tracking
+enum QueryType {
+  SUBSCRIBE = 0;       // Subscribe to order updates
+  GET_LOCATION = 1;    // Ask for current location
+  GET_ETA = 2;         // Ask for estimated delivery time
+  GET_STATUS = 3;      // Ask for current status
+  CANCEL_ORDER = 4;    // Request order cancellation
+}
+
+message TrackingQuery {
+  string order_id = 1;
+  QueryType type = 2;
+  string message = 3;  // Optional text message
+}
+
+enum ResponseType {
+  STATUS_UPDATE = 0;   // Automatic status update from server
+  LOCATION = 1;        // Response to location query
+  ETA = 2;             // Response to ETA query
+  CONFIRMATION = 3;    // Confirmation of action
+  ERROR = 4;           // Error response
+}
+
+message TrackingResponse {
+  string order_id = 1;
+  ResponseType type = 2;
+  OrderStatus status = 3;  // Current order status
+  string message = 4;      // Human-readable message
+  string location = 5;     // Current location (for LOCATION type)
+  string eta = 6;          // Estimated time (for ETA type)
+  string timestamp = 7;
 }

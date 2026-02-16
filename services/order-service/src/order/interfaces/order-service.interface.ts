@@ -86,6 +86,39 @@ export interface OrderStatusUpdate {
   timestamp: string;
 }
 
+// Bidirectional Streaming - Interactive Order Tracking
+export enum QueryType {
+  SUBSCRIBE = 'SUBSCRIBE',
+  GET_LOCATION = 'GET_LOCATION',
+  GET_ETA = 'GET_ETA',
+  GET_STATUS = 'GET_STATUS',
+  CANCEL_ORDER = 'CANCEL_ORDER',
+}
+
+export interface TrackingQuery {
+  order_id: string;
+  type: QueryType;
+  message?: string;
+}
+
+export enum ResponseType {
+  STATUS_UPDATE = 'STATUS_UPDATE',
+  LOCATION = 'LOCATION',
+  ETA = 'ETA',
+  CONFIRMATION = 'CONFIRMATION',
+  ERROR = 'ERROR',
+}
+
+export interface TrackingResponse {
+  order_id: string;
+  type: ResponseType;
+  status: OrderStatus;
+  message: string;
+  location?: string;
+  eta?: string;
+  timestamp: string;
+}
+
 // Service interface for gRPC controller
 export interface OrderServiceController {
   placeOrder(data: PlaceOrderRequest): Promise<Order>;
@@ -95,4 +128,5 @@ export interface OrderServiceController {
   updateOrderStatus(data: UpdateOrderStatusRequest): Promise<Order>;
   cancelOrder(data: CancelOrderRequest): Promise<Order>;
   watchOrderStatus(data: WatchOrderStatusRequest): Observable<OrderStatusUpdate>;
+  interactiveOrderTracking(queries: Observable<TrackingQuery>): Observable<TrackingResponse>;
 }

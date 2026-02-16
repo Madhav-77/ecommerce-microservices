@@ -14,6 +14,8 @@ import type {
   PlaceOrderRequest,
   WatchOrderStatusRequest,
   OrderStatusUpdate,
+  TrackingQuery,
+  TrackingResponse,
 } from './interfaces/order-service.interface';
 
 @Controller()
@@ -57,5 +59,12 @@ export class OrderController implements OrderServiceController {
     data: WatchOrderStatusRequest,
   ): Observable<OrderStatusUpdate> {
     return this.orderService.watchOrderStatus(data);
+  }
+
+  @GrpcStreamMethod('OrderService', 'InteractiveOrderTracking')
+  interactiveOrderTracking(
+    queries: Observable<TrackingQuery>,
+  ): Observable<TrackingResponse> {
+    return this.orderService.interactiveOrderTracking(queries);
   }
 }

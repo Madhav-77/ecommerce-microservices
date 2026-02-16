@@ -18,8 +18,10 @@ import type {
   PlaceOrderRequest,
   WatchOrderStatusRequest,
   OrderStatusUpdate,
+  TrackingQuery,
+  TrackingResponse,
 } from './interfaces/order-service.interface';
-import { OrderStatus } from './interfaces/order-service.interface';
+import { OrderStatus, QueryType, ResponseType } from './interfaces/order-service.interface';
 import type { UserServiceClient, User } from './interfaces/user-service-client.interface';
 import type { ProductServiceClient, Product, CheckStockResponse } from './interfaces/product-service-client.interface';
 
@@ -435,6 +437,145 @@ export class OrderService implements OnModuleInit {
         });
     });
   }
+
+  interactiveOrderTracking(
+    queries$: Observable<TrackingQuery>,
+  ): Observable<TrackingResponse> {
+  
+    this.logger.log('🔄 Starting interactive order tracking');
+  
+    return new Observable<TrackingResponse>((subscriber) => {
+  
+      let statusUpdateInterval: NodeJS.Timeout | null = null;
+      let currentStatusIndex = 0;
+      let isSubscribed = false;
+      let orderId: string | null = null;
+  
+      const statusProgression = [
+        OrderStatus.PAID,
+        OrderStatus.PROCESSING,
+        OrderStatus.SHIPPED,
+        OrderStatus.OUT_FOR_DELIVERY,
+        OrderStatus.DELIVERED,
+      ];
+  
+      const querySubscription = queries$.subscribe({
+        next: async (query) => {
+          const timestamp = new Date().toISOString();
+          orderId = query.order_id;
+  
+          try {
+            const order = await this.orderRepository.findOne({
+              where: { id: orderId },
+            });
+  
+            if (!order) {
+              subscriber.next({
+                order_id: orderId,
+                type: ResponseType.ERROR,
+                status: OrderStatus.CREATED,
+                message: `Order not found`,
+                timestamp,
+              });
+              return;
+            }
+  
+            switch (query.type) {
+  
+              case QueryType.SUBSCRIBE:
+                if (isSubscribed) return;
+  
+                isSubscribed = true;
+  
+                subscriber.next({
+                  order_id: orderId,
+                  type: ResponseType.CONFIRMATION,
+                  status: order.status as OrderStatus,
+                  message: `Subscribed. Current status: ${order.status}`,
+                  timestamp,
+                });
+  
+                statusUpdateInterval = setInterval(() => {
+                  if (currentStatusIndex >= statusProgression.length) {
+                    clearInterval(statusUpdateInterval!);
+                    return;
+                  }
+  
+                  const newStatus = statusProgression[currentStatusIndex++];
+  
+                  subscriber.next({
+                    order_id: orderId!,
+                    type: ResponseType.STATUS_UPDATE,
+                    status: newStatus,
+                    message: `Order status updated`,
+                    timestamp: new Date().toISOString(),
+                  });
+  
+                }, 3000);
+  
+                break;
+  
+              case QueryType.GET_STATUS:
+                subscriber.next({
+                  order_id: orderId,
+                  type: ResponseType.STATUS_UPDATE,
+                  status: order.status as OrderStatus,
+                  message: `Current status`,
+                  timestamp,
+                });
+                break;
+  
+              case QueryType.CANCEL_ORDER:
+                order.status = OrderStatus.CANCELLED;
+                await this.orderRepository.save(order);
+  
+                if (statusUpdateInterval) {
+                  clearInterval(statusUpdateInterval);
+                  statusUpdateInterval = null;
+                }
+  
+                subscriber.next({
+                  order_id: orderId,
+                  type: ResponseType.CONFIRMATION,
+                  status: OrderStatus.CANCELLED,
+                  message: `Order cancelled`,
+                  timestamp,
+                });
+                break;
+  
+              default:
+                subscriber.next({
+                  order_id: orderId,
+                  type: ResponseType.ERROR,
+                  status: order.status as OrderStatus,
+                  message: `Unknown query type`,
+                  timestamp,
+                });
+            }
+  
+          } catch (error) {
+            subscriber.error(error);
+          }
+        },
+  
+        error: (err) => subscriber.error(err),
+  
+        complete: () => subscriber.complete(),
+      });
+  
+      // 🔥 Proper teardown logic
+      return () => {
+        this.logger.log('🛑 Cleaning up stream');
+  
+        querySubscription.unsubscribe();
+  
+        if (statusUpdateInterval) {
+          clearInterval(statusUpdateInterval);
+        }
+      };
+    });
+  }
+  
 
   /**
    * Maps TypeORM Order entity to proto Order message
