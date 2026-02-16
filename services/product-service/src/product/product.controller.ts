@@ -1,5 +1,6 @@
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
+import { Observable } from 'rxjs';
 import { ProductService } from './product.service';
 import type {
   Product,
@@ -10,6 +11,7 @@ import type {
   UpdateStockRequest,
   CheckStockRequest,
   CheckStockResponse,
+  BulkCreateProductsResponse,
   ProductServiceController,
 } from './interfaces/product-service.interface';
 
@@ -40,6 +42,13 @@ export class ProductController implements ProductServiceController {
   @GrpcMethod('ProductService', 'CheckStock')
   async checkStock(data: CheckStockRequest): Promise<CheckStockResponse> {
     return this.productService.checkStock(data);
+  }
+
+  @GrpcStreamMethod('ProductService', 'BulkCreateProducts')
+  bulkCreateProducts(
+    data: Observable<CreateProductRequest>,
+  ): Observable<BulkCreateProductsResponse> {
+    return this.productService.bulkCreateProducts(data);
   }
 
   // TODO: Implement UpdateProduct and DeleteProduct in future phases

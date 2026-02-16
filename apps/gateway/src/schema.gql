@@ -2,6 +2,13 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type BulkCreateProductsResponse {
+  created: Int!
+  errors: [ProductError!]!
+  failed: Int!
+  total_received: Int!
+}
+
 input CheckStockInput {
   id: ID!
   required_quantity: Int!
@@ -29,6 +36,9 @@ type LoginResponse {
 }
 
 type Mutation {
+  """Bulk create products (Client Streaming RPC)"""
+  bulkCreateProducts(products: [CreateProductInput!]!): BulkCreateProductsResponse!
+
   """Create a new product"""
   createProduct(input: CreateProductInput!): Product!
 
@@ -98,6 +108,11 @@ type Product {
   name: String!
   price: Float!
   stock: Int!
+}
+
+type ProductError {
+  error_message: String!
+  product_name: String!
 }
 
 type ProductList {

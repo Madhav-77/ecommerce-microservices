@@ -11,6 +11,9 @@ service ProductService {
   rpc DeleteProduct (DeleteProductRequest) returns (DeleteProductResponse);
   rpc UpdateStock (UpdateStockRequest) returns (Product);
   rpc CheckStock (CheckStockRequest) returns (CheckStockResponse);
+
+  // Client Streaming RPC - Bulk product uploads
+  rpc BulkCreateProducts (stream CreateProductRequest) returns (BulkCreateProductsResponse);
 }
 
 // Messages
@@ -71,4 +74,17 @@ message CheckStockRequest {
 message CheckStockResponse {
   bool available = 1;
   int32 current_stock = 2;
+}
+
+// Client Streaming - Bulk product creation response
+message BulkCreateProductsResponse {
+  int32 total_received = 1;  // Total products received in stream
+  int32 created = 2;          // Successfully created
+  int32 failed = 3;           // Failed to create
+  repeated ProductError errors = 4;  // Details of failures
+}
+
+message ProductError {
+  string product_name = 1;
+  string error_message = 2;
 }

@@ -1,18 +1,21 @@
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
-import { Inject, OnModuleInit } from '@nestjs/common';
+import { Inject, OnModuleInit, Logger } from '@nestjs/common';
 import type { ClientGrpc } from '@nestjs/microservices';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, Observable, from } from 'rxjs';
+import { concatMap } from 'rxjs/operators';
 import {
   ProductType,
   ProductListType,
   CreateProductInput,
   CheckStockInput,
   CheckStockResponseType,
+  BulkCreateProductsResponseType,
 } from '../types/product.type';
 import type { ProductServiceClient } from '../interfaces/product-service-client.interface';
 
 @Resolver(() => ProductType)
 export class ProductResolver implements OnModuleInit {
+  private readonly logger = new Logger(ProductResolver.name);
   private productService: ProductServiceClient;
 
   constructor(@Inject('PRODUCT_SERVICE') private client: ClientGrpc) {}
@@ -89,6 +92,43 @@ export class ProductResolver implements OnModuleInit {
       return result as CheckStockResponseType;
     } catch (error) {
       throw new Error(error.details || 'Failed to check stock');
+    }
+  }
+
+  @Mutation(() => BulkCreateProductsResponseType, {
+    description: 'Bulk create products (Client Streaming RPC)',
+  })
+  async bulkCreateProducts(
+    @Args('products', { type: () => [CreateProductInput] })
+    products: CreateProductInput[],
+  ): Promise<BulkCreateProductsResponseType> {
+    this.logger.log(`📤 [GATEWAY] Starting bulk upload: ${products.length} products`);
+
+    try {
+      // Convert array to Observable stream for gRPC client streaming
+      const productStream: Observable<any> = from(products).pipe(
+        concatMap((product, index) => {
+          const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+          this.logger.log(`⬆️  [${timestamp}] Streaming to Product Service [${index + 1}/${products.length}]: ${product.name}`);
+          return [product]; // Emit each product one at a time
+        }),
+      );
+
+      this.logger.log('🔄 [GATEWAY] Calling gRPC client streaming method...');
+
+      // Call gRPC client streaming method
+      const result = await lastValueFrom(
+        this.productService.bulkCreateProducts(productStream),
+      );
+
+      this.logger.log(
+        `✅ [GATEWAY] Bulk create complete: ${result.created} created, ${result.failed} failed`,
+      );
+
+      return result as BulkCreateProductsResponseType;
+    } catch (error) {
+      this.logger.error('❌ [GATEWAY] Bulk create failed:', error);
+      throw new Error(error.details || 'Failed to bulk create products');
     }
   }
 }

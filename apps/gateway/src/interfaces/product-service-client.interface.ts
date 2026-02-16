@@ -1,4 +1,5 @@
 // Product Service gRPC client interface
+import { Observable } from 'rxjs';
 
 export interface Product {
   id: string;
@@ -44,10 +45,23 @@ export interface CheckStockResponse {
   current_stock: number;
 }
 
+export interface ProductError {
+  product_name: string;
+  error_message: string;
+}
+
+export interface BulkCreateProductsResponse {
+  total_received: number;
+  created: number;
+  failed: number;
+  errors: ProductError[];
+}
+
 export interface ProductServiceClient {
   createProduct(data: CreateProductRequest): any;
   findProductById(data: FindProductByIdRequest): any;
   findAllProducts(data: FindAllProductsRequest): any;
   updateStock(data: UpdateStockRequest): any;
   checkStock(data: CheckStockRequest): any;
+  bulkCreateProducts(data: Observable<CreateProductRequest>): Observable<BulkCreateProductsResponse>;
 }

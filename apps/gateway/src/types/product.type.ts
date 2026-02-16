@@ -56,3 +56,27 @@ export class CheckStockResponseType {
   @Field(() => Int)
   current_stock: number;
 }
+
+@ObjectType('ProductError')
+export class ProductErrorType {
+  @Field()
+  product_name: string;
+
+  @Field()
+  error_message: string;
+}
+
+@ObjectType('BulkCreateProductsResponse')
+export class BulkCreateProductsResponseType {
+  @Field(() => Int)
+  total_received: number;
+
+  @Field(() => Int)
+  created: number;
+
+  @Field(() => Int)
+  failed: number;
+
+  @Field(() => [ProductErrorType])
+  errors: ProductErrorType[];
+}

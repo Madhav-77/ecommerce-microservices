@@ -1,4 +1,5 @@
 // TypeScript interfaces matching product.proto messages
+import { Observable } from 'rxjs';
 
 export interface Product {
   id: string;
@@ -59,6 +60,19 @@ export interface CheckStockResponse {
   current_stock: number;
 }
 
+// Client Streaming - Bulk product creation
+export interface ProductError {
+  product_name: string;
+  error_message: string;
+}
+
+export interface BulkCreateProductsResponse {
+  total_received: number;
+  created: number;
+  failed: number;
+  errors: ProductError[];
+}
+
 // Service interface for gRPC controller
 export interface ProductServiceController {
   createProduct(data: CreateProductRequest): Promise<Product>;
@@ -66,4 +80,5 @@ export interface ProductServiceController {
   checkStock(data: CheckStockRequest): Promise<CheckStockResponse>;
   updateStock(data: UpdateStockRequest): Promise<Product>;
   findProductById(data: FindProductByIdRequest): Promise<Product>;
+  bulkCreateProducts(data: Observable<CreateProductRequest>): Observable<BulkCreateProductsResponse>;
 }

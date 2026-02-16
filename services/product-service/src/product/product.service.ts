@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
+import { Observable } from 'rxjs';
 import { Product as ProductEntity } from '../entities/product.entity';
 import type {
   Product,
@@ -12,6 +13,8 @@ import type {
   UpdateStockRequest,
   CheckStockRequest,
   CheckStockResponse,
+  BulkCreateProductsResponse,
+  ProductError,
 } from './interfaces/product-service.interface';
 
 @Injectable()
@@ -163,6 +166,57 @@ export class ProductService {
       current_stock: product.stock,
     };
   }
+
+  bulkCreateProducts(
+    stream$: Observable<CreateProductRequest>,
+  ): Observable<BulkCreateProductsResponse> {
+    this.logger.log('🔄 [CLIENT STREAMING] Starting bulk product creation');
+
+    return new Observable((observer) => {
+      let total = 0;
+      let created = 0;
+      let failed = 0;
+      const errors: any = [];
+
+      stream$.subscribe({
+        next: async (product) => {
+          total++;
+          const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+          this.logger.log(`⬇️  [${timestamp}] Received product #${total}: ${product.name}`);
+
+          try {
+            await this.createProduct(product);
+            created++;
+            this.logger.log(`✓ [${timestamp}] Created: ${product.name}`);
+          } catch (err) {
+            failed++;
+            errors.push({
+              product_name: product.name,
+              error_message: err.message,
+            });
+            this.logger.error(`✗ [${timestamp}] Failed: ${product.name} - ${err.message}`);
+          }
+        },
+        error: (err) => {
+          this.logger.error('❌ [CLIENT STREAMING] Stream error:', err);
+          observer.error(err);
+        },
+        complete: () => {
+          this.logger.log(
+            `✅ [CLIENT STREAMING] Complete: ${created} created, ${failed} failed out of ${total} total`,
+          );
+          observer.next({
+            total_received: total,
+            created,
+            failed,
+            errors,
+          });
+          observer.complete();
+        },
+      });
+    });
+  }
+  
 
   /**
    * Maps TypeORM Product entity to proto Product message

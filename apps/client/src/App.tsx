@@ -4,9 +4,10 @@ import Users from './components/Users';
 import Orders from './components/Orders';
 import Cart from './components/Cart';
 import { OrderTracking } from './components/OrderTracking';
+import BulkUpload from './components/BulkUpload';
 import type { Product, CartItem } from './types/interfaces';
 
-type View = 'products' | 'users' | 'orders' | 'cart' | 'tracking';
+type View = 'products' | 'users' | 'orders' | 'cart' | 'tracking' | 'bulk-upload';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('products');
@@ -109,6 +110,12 @@ function App() {
             >
               Track Order
             </button>
+            <button
+              className={currentView === 'bulk-upload' ? 'active' : ''}
+              onClick={() => setCurrentView('bulk-upload')}
+            >
+              Bulk Upload
+            </button>
           </nav>
         </div>
       </header>
@@ -126,6 +133,7 @@ function App() {
         {currentView === 'users' && <Users />}
         {currentView === 'orders' && <Orders />}
         {currentView === 'tracking' && <OrderTracking />}
+        {currentView === 'bulk-upload' && <BulkUpload />}
       </main>
     </div>
   );
