@@ -14,6 +14,12 @@ services:
       - user_db_data:/var/lib/postgresql/data
     networks:
       - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${USER_DB_USER} -d ${USER_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   product-db:
     image: postgres:15
@@ -28,6 +34,12 @@ services:
       - product_db_data:/var/lib/postgresql/data
     networks:
       - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PRODUCT_DB_USER} -d ${PRODUCT_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   order-db:
     image: postgres:15
@@ -42,6 +54,12 @@ services:
       - order_db_data:/var/lib/postgresql/data
     networks:
       - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ORDER_DB_USER} -d ${ORDER_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   payment-db:
     image: postgres:15
@@ -56,6 +74,12 @@ services:
       - payment_db_data:/var/lib/postgresql/data
     networks:
       - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PAYMENT_DB_USER} -d ${PAYMENT_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   notification-db:
     image: postgres:15
@@ -70,125 +94,167 @@ services:
       - notification_db_data:/var/lib/postgresql/data
     networks:
       - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${NOTIFICATION_DB_USER} -d ${NOTIFICATION_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # =========================
-  # Microservices (Commented out for local development)
+  # Microservices
   # =========================
 
-  # user-service:
-  #   build:
-  #     context: ./services/user-service
-  #     dockerfile: Dockerfile
-  #   container_name: user-service
-  #   ports:
-  #     - "3001:3001"
-  #     - "5001:5001"
-  #   environment:
-  #     NODE_ENV: production
-  #     PORT: 3001
-  #     GRPC_PORT: 5001
-  #     DB_HOST: user-db
-  #     DB_PORT: 5432
-  #     DB_USER: ${USER_DB_USER}
-  #     DB_PASSWORD: ${USER_DB_PASSWORD}
-  #     DB_NAME: ${USER_DB_NAME}
-  #   depends_on:
-  #     - user-db
-  #   networks:
-  #     - microservices-network
-  #   restart: unless-stopped
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "5001:5001"
+    environment:
+      NODE_ENV: production
+      GRPC_PORT: 5001
+      DB_HOST: user-db
+      DB_PORT: 5432
+      DB_USER: ${USER_DB_USER}
+      DB_PASSWORD: ${USER_DB_PASSWORD}
+      DB_NAME: ${USER_DB_NAME}
+    depends_on:
+      user-db:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(5001, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
 
-  # product-service:
-  #   build:
-  #     context: ./services/product-service
-  #     dockerfile: Dockerfile
-  #   container_name: product-service
-  #   ports:
-  #     - "3002:3002"
-  #     - "5002:5002"
-  #   environment:
-  #     NODE_ENV: production
-  #     PORT: 3002
-  #     GRPC_PORT: 5002
-  #     DB_HOST: product-db
-  #     DB_PORT: 5432
-  #     DB_USER: ${PRODUCT_DB_USER}
-  #     DB_PASSWORD: ${PRODUCT_DB_PASSWORD}
-  #     DB_NAME: ${PRODUCT_DB_NAME}
-  #   depends_on:
-  #     - product-db
-  #   networks:
-  #     - microservices-network
-  #   restart: unless-stopped
+  product-service:
+    build:
+      context: ./services/product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    ports:
+      - "5002:5002"
+    environment:
+      NODE_ENV: production
+      GRPC_PORT: 5002
+      DB_HOST: product-db
+      DB_PORT: 5432
+      DB_USER: ${PRODUCT_DB_USER}
+      DB_PASSWORD: ${PRODUCT_DB_PASSWORD}
+      DB_NAME: ${PRODUCT_DB_NAME}
+    depends_on:
+      product-db:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(5002, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
 
-  # order-service:
-  #   build:
-  #     context: ./services/order-service
-  #     dockerfile: Dockerfile
-  #   container_name: order-service
-  #   ports:
-  #     - "3003:3003"
-  #     - "5003:5003"
-  #   environment:
-  #     NODE_ENV: production
-  #     PORT: 3003
-  #     GRPC_PORT: 5003
-  #     DB_HOST: order-db
-  #     DB_PORT: 5432
-  #     DB_USER: ${ORDER_DB_USER}
-  #     DB_PASSWORD: ${ORDER_DB_PASSWORD}
-  #     DB_NAME: ${ORDER_DB_NAME}
-  #   depends_on:
-  #     - order-db
-  #   networks:
-  #     - microservices-network
-  #   restart: unless-stopped
+  order-service:
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "5003:5003"
+    environment:
+      NODE_ENV: production
+      GRPC_PORT: 5003
+      DB_HOST: order-db
+      DB_PORT: 5432
+      DB_USER: ${ORDER_DB_USER}
+      DB_PASSWORD: ${ORDER_DB_PASSWORD}
+      DB_NAME: ${ORDER_DB_NAME}
+      USER_SERVICE_URL: user-service:5001
+      PRODUCT_SERVICE_URL: product-service:5002
+    depends_on:
+      order-db:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(5003, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
 
-  # payment-service:
-  #   build:
-  #     context: ./services/payment-service
-  #     dockerfile: Dockerfile
-  #   container_name: payment-service
-  #   ports:
-  #     - "3004:3004"
-  #     - "5004:5004"
-  #   environment:
-  #     NODE_ENV: production
-  #     PORT: 3004
-  #     GRPC_PORT: 5004
-  #     DB_HOST: payment-db
-  #     DB_PORT: 5432
-  #     DB_USER: ${PAYMENT_DB_USER}
-  #     DB_PASSWORD: ${PAYMENT_DB_PASSWORD}
-  #     DB_NAME: ${PAYMENT_DB_NAME}
-  #   depends_on:
-  #     - payment-db
-  #   networks:
-  #     - microservices-network
-  #   restart: unless-stopped
+  # =========================
+  # API Gateway
+  # =========================
 
-  # notification-service:
-  #   build:
-  #     context: ./services/notification-service
-  #     dockerfile: Dockerfile
-  #   container_name: notification-service
-  #   ports:
-  #     - "3005:3005"
-  #     - "5005:5005"
-  #   environment:
-  #     NODE_ENV: production
-  #     PORT: 3005
-  #     GRPC_PORT: 5005
-  #     DB_HOST: notification-db
-  #     DB_PORT: 5432
-  #     DB_USER: ${NOTIFICATION_DB_USER}
-  #     DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
-  #     DB_NAME: ${NOTIFICATION_DB_NAME}
-  #   depends_on:
-  #     - notification-db
-  #   networks:
-  #     - microservices-network
-  #   restart: unless-stopped
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    container_name: gateway
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      USER_SERVICE_URL: user-service:5001
+      PRODUCT_SERVICE_URL: product-service:5002
+      ORDER_SERVICE_URL: order-service:5003
+    depends_on:
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+  # =========================
+  # Frontend Client
+  # =========================
+
+  client:
+    build:
+      context: .
+      dockerfile: apps/client/Dockerfile
+      args:
+        VITE_GATEWAY_URL: http://localhost:4000/graphql
+        VITE_WS_GATEWAY_URL: ws://localhost:4000/graphql
+    container_name: client
+    ports:
+      - "3000:80"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
 networks:
   microservices-network:

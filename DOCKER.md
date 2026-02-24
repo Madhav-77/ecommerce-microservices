@@ -1,8 +1,12 @@
-# Docker Setup Guide
+# Docker Deployment Guide
 
 ## Overview
 
-This project uses Docker and Docker Compose to run all microservices and databases in containers.
+This project uses Docker and Docker Compose to run the complete e-commerce microservices stack:
+- **5 PostgreSQL databases** (user, product, order, payment, notification)
+- **3 Microservices** (user-service, product-service, order-service)
+- **1 API Gateway** (GraphQL + WebSocket)
+- **1 React Client** (SPA with Nginx)
 
 ---
 
@@ -315,14 +319,85 @@ For orchestration and scaling in production.
 
 ---
 
+## Phase 7: Full Stack Deployment
+
+### New in Phase 7
+
+✅ **Gateway Service** - GraphQL API with WebSocket subscriptions
+✅ **React Client** - Production-ready SPA served by Nginx
+✅ **Service Discovery** - Container-to-container communication via Docker network
+✅ **Health Checks** - All services report health status
+✅ **Environment Variables** - Configurable URLs for gateway and WebSocket
+
+### Architecture
+
+```
+Client (Nginx)  →  Gateway (GraphQL)  →  Order Service (gRPC)
+:3000               :4000                   :5003
+                                        →  User Service (gRPC)
+                                            :5001
+                                        →  Product Service (gRPC)
+                                            :5002
+```
+
+### Access Points
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| Client | http://localhost:3000 | React frontend |
+| Gateway | http://localhost:4000/graphql | GraphQL API |
+| Gateway Health | http://localhost:4000/health | Health check |
+
+### Testing the Full Stack
+
+1. **Start everything**:
+```bash
+docker compose up -d
+```
+
+2. **Wait for health checks** (can take 1-2 minutes):
+```bash
+watch docker compose ps
+```
+
+3. **Access the client**:
+```bash
+open http://localhost:3000
+```
+
+4. **Test GraphQL**:
+```bash
+curl http://localhost:4000/health
+```
+
+5. **View logs**:
+```bash
+docker compose logs -f gateway client
+```
+
+### Environment Configuration
+
+The client is built with these environment variables:
+```yaml
+args:
+  VITE_GATEWAY_URL: http://localhost:4000/graphql
+  VITE_WS_GATEWAY_URL: ws://localhost:4000/graphql
+```
+
+To change for production:
+1. Update `docker-compose.yml` under `client` → `build` → `args`
+2. Rebuild: `docker compose build client`
+
+---
+
 ## Clean Up
 
 ```bash
 # Stop and remove containers
-docker-compose down
+docker compose down
 
 # Remove volumes (deletes data!)
-docker-compose down -v
+docker compose down -v
 
 # Remove images
 docker system prune -a
@@ -330,3 +405,17 @@ docker system prune -a
 # Remove everything (nuclear option)
 docker system prune -a --volumes
 ```
+
+---
+
+## Next Steps
+
+After successful deployment:
+
+1. **Add Monitoring** - Prometheus + Grafana
+2. **Add Logging** - ELK stack or Loki
+3. **Add Tracing** - Jaeger for distributed tracing
+4. **Setup CI/CD** - Automated builds and deployments
+5. **Production Deployment** - Kubernetes, AWS ECS, or Google Cloud Run
+
+See [PLAN.md](./PLAN.md) for the complete roadmap.

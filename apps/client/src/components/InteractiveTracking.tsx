@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from 'graphql-ws';
+import { WS_GATEWAY_URL } from '../lib/graphql-client';
 
 interface TrackingResponse {
   order_id: string;
@@ -31,7 +32,7 @@ export function InteractiveTracking() {
 
     // Create WebSocket client
     const client = createClient({
-      url: 'ws://localhost:4000/graphql',
+      url: WS_GATEWAY_URL,
     });
 
     clientRef.current = client;

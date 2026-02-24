@@ -15,7 +15,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
@@ -28,8 +28,12 @@ RUN npm ci --only=production
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
 
-# Expose ports
-EXPOSE 3003 5003
+# Expose gRPC port (only 5003 needed for gRPC communication)
+EXPOSE 5003
+
+# Health check (TCP check for gRPC port)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD node -e "require('net').connect(5003, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"
 
 # Start the application
-CMD ["npm", "run", "start:prod"]
+CMD ["node", "dist/main.js"]
